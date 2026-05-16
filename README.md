@@ -1,57 +1,86 @@
 # meisbot
 
-A modular Discord logging bot. Fork/rewrite of [curtisf/logger](https://github.com/curtisf/logger) with extended features and a modern stack.
-
-## Stack
-
-- **[discord.js v14](https://discord.js.org/)** — Discord API wrapper
-- **TypeScript 5.7** — fully typed throughout
-- **Node.js 26+** with **`node:sqlite`** built-in — no native addon compilation, no better-sqlite3
-- `tsx watch` for development, `tsc` for production
+A modular Discord bot with comprehensive logging, moderation, and utility features. Started as a fork/rewrite of [curtisf/logger](https://github.com/curtisf/logger).
 
 ## Features
 
-### 24 log events, all configurable per channel
+### Logging — 24 events, fully configurable
 
-Every event can be routed to a different channel. Use presets for quick setup or configure individual events.
+Route each event to a different channel. Use presets for quick setup or mix and match individual events.
 
-| Preset | Events |
-|--------|--------|
-| `voice` | voiceChannelJoin, voiceChannelLeave, voiceChannelSwitch, voiceStateUpdate |
-| `message` | messageDelete, messageDeleteBulk, messageUpdate |
-| `member` | guildMemberUpdate, guildMemberNickUpdate, guildMemberVerify, guildMemberBoostUpdate |
-| `moderation` | guildBanAdd, guildBanRemove, guildMemberKick |
-| `joinlog` | guildMemberAdd, guildMemberRemove |
-| `server` | guildUpdate |
-| `role` | guildRoleCreate, guildRoleDelete, guildRoleUpdate |
-| `channel` | channelCreate, channelDelete, channelUpdate |
-| `all` | all 24 events |
+| Preset | What it covers |
+|--------|---------------|
+| `voice` | joins, leaves, switches, server mute/deafen |
+| `message` | deletes, edits, bulk deletes |
+| `member` | role changes, nicknames, boosts, verification |
+| `moderation` | bans, unbans, kicks |
+| `joinlog` | joins and leaves |
+| `server` | server setting changes |
+| `role` | role created/deleted/updated |
+| `channel` | channel created/deleted/updated |
+| `all` | everything (all 24 events) |
 
-### Commands
+### Moderation
 
-| Command | Description | Permission |
-|---------|-------------|------------|
-| `/log set <channel> [events]` | Route events to a channel (preset or comma-separated names, default: all) | Manage Server |
-| `/log remove [events]` | Remove log channel for events | Manage Server |
-| `/log list` | Show current logging configuration | Manage Server |
-| `/log events [event]` | List all events, or describe a specific one | Manage Server |
-| `/log ignorechannel [channel]` | Toggle a channel being excluded from logging | Manage Server |
+| Command | Description |
+|---------|-------------|
+| `/kick <user> [reason]` | Kick a member (DMs them first, checks role hierarchy) |
+| `/ban <user> [reason] [delete_days]` | Ban a user — works on members and non-members by ID |
+| `/unban <user_id> [reason]` | Unban a user by ID |
+| `/timeout <user> [duration] [reason]` | Timeout a member (`10m`, `1h`, `2d` — max 28 days). Omit duration to remove. |
+| `/warn <user> [reason]` | Warn a member (saved to DB, DMs them) |
+| `/warnings <user> [clear]` | View or clear a user's warnings |
+| `/delwarn <id>` | Delete a specific warning by ID |
+| `/purge <count> [user]` | Bulk delete up to 100 messages (<14 days old), optionally filter by user |
+| `/lock [reason]` | Lock the current channel (deny @everyone from sending) |
+| `/unlock [reason]` | Unlock the current channel |
+| `/slowmode <duration>` | Set slowmode (`5s`, `30s`, `1m`) — use `off` to disable |
+
+### Utility
+
+| Command | Description |
+|---------|-------------|
+| `/ping` | Bot latency (roundtrip + WebSocket) |
+| `/userinfo [user]` | Account age, server join date, roles, notable permissions |
+| `/serverinfo` | Member/channel/role counts, boost level, features |
+| `/avatar [user]` | Global and server avatar (shows both if different) |
+| `/banner [user]` | Profile banner |
+| `/roleinfo <role>` | Color, member count, permissions, position, hoisted |
+| `/botinfo` | Uptime, guild count, Node.js version, WebSocket ping |
+| `/archive [count]` | Save 5–100 recent messages to a `.txt` file |
+| `/help [command]` | Command overview, or detailed info for a specific command |
+
+### Fun
+
+| Command | Description |
+|---------|-------------|
+| `/8ball <question>` | Ask the magic 8-ball |
+| `/coinflip` | Heads or tails |
+| `/choose <options>` | Pick randomly from a comma-separated list |
+| `/poll <question> [options]` | Create a poll — yes/no by default, or up to 10 custom options (separated by `\|`) |
+
+### Logging config commands
+
+| Command | Permission |
+|---------|-----------|
+| `/log set <channel> [events]` | Route events to a channel — preset or comma-separated names, default: all | Manage Server |
+| `/log remove [events]` | Remove log routing for events | Manage Server |
+| `/log list` | Show current logging config | Manage Server |
+| `/log events [event]` | List all events, or get info on a specific one | Manage Server |
+| `/log ignorechannel [channel]` | Toggle a channel from being excluded from logging | Manage Server |
 | `/log logbots` | Toggle whether bot actions are logged | Manage Server |
-| `/log reset` | Reset all logging settings for this server | Manage Server |
-| `/archive [count]` | Save 5–100 recent messages as a `.txt` file | Manage Messages |
-| `/ping` | Show bot latency (roundtrip + WebSocket) | — |
-| `/userinfo [user]` | Show user info: roles, permissions, timestamps | — |
-| `/serverinfo` | Show server info: member/channel/role counts | — |
-| `/help [command]` | List all commands, or show details for one | — |
+| `/log reset` | Reset all logging settings | Manage Server |
+
+---
 
 ## Setup
 
 ### Prerequisites
 
-- Node.js 26 or newer
-- A Discord bot application with these **privileged intents** enabled in the Developer Portal:
-  - **Server Members Intent**
-  - **Message Content Intent**
+- **Node.js 26+** (uses the built-in `node:sqlite`)
+- A Discord bot application with these **privileged intents** enabled in the [Developer Portal](https://discord.com/developers/applications):
+  - Server Members Intent
+  - Message Content Intent
 
 ### Install
 
@@ -63,14 +92,12 @@ npm install
 
 ### Configure
 
-```bash
-cp .env.example .env
-```
+Create a `.env` file in the project root:
 
 ```env
 BOT_TOKEN=your_bot_token_here
 CLIENT_ID=your_application_client_id
-DEV_GUILD_ID=your_test_guild_id   # only needed for dev (guild-scoped commands deploy instantly)
+DEV_GUILD_ID=your_test_guild_id   # optional — guild-scoped commands deploy instantly during dev
 DATABASE_PATH=./data/meisbot.db
 LOG_LEVEL=info                     # debug | info | warn | error
 ```
@@ -78,8 +105,11 @@ LOG_LEVEL=info                     # debug | info | warn | error
 ### First run
 
 ```bash
-npm run deploy-commands   # register slash commands with Discord (run once, or after adding commands)
-npm run dev               # start with hot reload
+# Register slash commands with Discord (run once, and again after adding new commands)
+npm run deploy-commands
+
+# Start with hot reload for development
+npm run dev
 ```
 
 ### Production
@@ -89,64 +119,109 @@ npm run build   # compile TypeScript → dist/
 npm start       # run compiled bot
 ```
 
-Recommended: manage with `pm2` or a `systemd` unit.
+Recommended: manage with `pm2` or a `systemd` service.
 
-## Development
+---
+
+## Auto-deploy (webhook)
+
+The `deploy/webhook.js` script listens on port 9001 and triggers a pull + rebuild on every push to `main`. Set it up on your server:
 
 ```bash
-node_modules/.bin/tsc --noEmit   # type check without emitting files
-npm run build                    # full compile
-npm run dev                      # tsx watch (hot reload on file changes)
+# Allow the port
+ufw allow 9001/tcp
+
+# Start the webhook receiver with pm2
+WEBHOOK_SECRET=yourSecret pm2 start ~/meisbot/deploy/webhook.js --name meisbot-webhook
+pm2 save
 ```
+
+Then add a webhook in your GitHub repo settings:
+- **Payload URL:** `http://<your-server-ip>:9001/hook`
+- **Content type:** `application/json`
+- **Secret:** same value as `WEBHOOK_SECRET`
+- **Events:** Just the push event
+
+---
 
 ## Project structure
 
 ```
 src/
-├── index.ts                  — bot entry point, client setup, intents
-├── deploy-commands.ts        — registers slash commands with Discord
-├── types/index.ts            — BotClient, Command, LogEventName, PRESET_EVENT_MAP, GuildSettings
-├── database/index.ts         — node:sqlite, all guild/message helpers, in-memory cache
+├── index.ts                   bot entry point, client setup, intents + partials
+├── deploy-commands.ts         registers slash commands with Discord
+├── types/index.ts             BotClient, Command, LogEventName, GuildSettings, Warning
+├── database/index.ts          SQLite via node:sqlite — guild/message/warning helpers
 ├── utils/
-│   ├── logger.ts             — colored console logger (respects LOG_LEVEL)
-│   ├── format.ts             — formatUser, dt (Discord timestamps), snowflakeToMs, intToHex
-│   ├── sender.ts             — sendLog(): dispatches embeds to the configured log channel
-│   ├── chunkify.ts           — splits long text into Discord field-safe chunks
-│   ├── auditlog.ts           — fetchAuditLog(), executorInfo() (safe for PartialUser)
-│   └── inviteCache.ts        — in-memory invite cache for join tracking
+│   ├── logger.ts              colored console logger (respects LOG_LEVEL)
+│   ├── format.ts              formatUser, dt (Discord timestamps), snowflakeToMs, intToHex
+│   ├── sender.ts              sendLog() — central dispatch to configured log channels
+│   ├── chunkify.ts            splits long text into Discord-safe chunks
+│   ├── auditlog.ts            fetchAuditLog(), executorInfo() (safe for PartialUser)
+│   ├── inviteCache.ts         in-memory invite tracking for join events
+│   └── duration.ts            parseDuration(), formatDuration() — "10m", "1h30m", "7d"
 ├── handlers/
-│   ├── commandHandler.ts     — auto-loads all commands from src/commands/**
-│   └── eventHandler.ts       — auto-loads all events from src/events/**
+│   ├── commandHandler.ts      auto-loads all commands from src/commands/**
+│   └── eventHandler.ts        auto-loads all events from src/events/**
 ├── events/
 │   ├── client/
-│   │   ├── ready.ts          — startup: guild init, invite cache, hourly DB cleanup
-│   │   └── interactionCreate.ts — dispatches slash commands + autocomplete
-│   └── guild/                — one file per Discord event (see list above)
+│   │   ├── ready.ts           startup: guild init, invite cache, hourly DB cleanup
+│   │   └── interactionCreate.ts  dispatches slash commands + autocomplete
+│   └── guild/                 one file per Discord event (24 total)
 └── commands/
-    ├── logging/log.ts        — /log (set/remove/list/events/ignorechannel/logbots/reset)
-    └── utility/              — /ping, /userinfo, /serverinfo, /archive, /help
+    ├── logging/log.ts         /log subcommands
+    ├── moderation/            kick, ban, unban, timeout, warn, warnings, delwarn, purge, lock, unlock, slowmode
+    ├── utility/               ping, userinfo, serverinfo, avatar, banner, roleinfo, botinfo, archive, help
+    └── fun/                   8ball, coinflip, choose, poll
 ```
 
-## Adding a new log event
+---
+
+## Extending the bot
+
+### Adding a new log event
 
 1. Create `src/events/guild/myEvent.ts`:
 
 ```typescript
 import { Events } from 'discord.js';
 import { BotClient } from '../../types';
+import { sendLog } from '../../utils/sender';
+
 export const name = Events.SomeEvent;
 export const once = false;
-export async function execute(client: BotClient, /* discord params */): Promise<void> {
-  // build embed, then:
+
+export async function execute(client: BotClient, /* ...discord params */): Promise<void> {
+  // build your embed, then:
   await sendLog(client, guild.id, 'myEventName', { embeds: [embed] });
 }
 ```
 
-2. Add `'myEventName'` to `LogEventName` in `src/types/index.ts` and add it to `ALL_LOG_EVENTS` and `EVENT_DESCRIPTIONS`.
+2. Add `'myEventName'` to `LogEventName` in `src/types/index.ts`, and add it to `ALL_LOG_EVENTS` and `EVENT_DESCRIPTIONS`.
 
-The event is picked up automatically — no import or registration needed.
+The event is picked up automatically — no imports or registrations needed.
+
+### Adding a new command
+
+Create `src/commands/<category>/myCommand.ts`:
+
+```typescript
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+
+export const data = new SlashCommandBuilder()
+  .setName('mycommand')
+  .setDescription('Does something cool');
+
+export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
+  await interaction.reply('Hello!');
+}
+```
+
+Then add it to `COMMAND_CATEGORIES` in `src/commands/utility/help.ts` and re-run `npm run deploy-commands`.
+
+---
 
 ## Credits
 
-Based on [curtisf/logger](https://github.com/curtisf/logger) by curtisf, licensed under [GPL-3.0](LICENSE).
+Based on [curtisf/logger](https://github.com/curtisf/logger) by curtisf — licensed under [GPL-3.0](LICENSE).  
 This project is also released under GPL-3.0.

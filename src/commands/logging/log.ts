@@ -22,7 +22,7 @@ export const data = new SlashCommandBuilder()
       .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement))
     .addStringOption(opt => opt
       .setName('events')
-      .setDescription('Comma-separated events or preset name (voice/message/member/moderation/joinlog/server/role/channel/all). Default: all')
+      .setDescription('Preset or events (voice/message/member/moderation/joinlog/server/role/channel/all). Default: all')
       .setRequired(false)))
   .addSubcommand(sub => sub
     .setName('remove')

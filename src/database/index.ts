@@ -8,33 +8,36 @@ const dbPath = path.resolve(process.env.DATABASE_PATH || './data/meisbot.db');
 mkdirSync(path.dirname(dbPath), { recursive: true });
 const db = new DatabaseSync(dbPath);
 
+// Tables are created at module load so prepared statements below are always valid,
+// even when this module is imported by deploy-commands.ts without calling initDb().
+db.exec(`
+  PRAGMA journal_mode = WAL;
+  PRAGMA foreign_keys = ON;
+
+  CREATE TABLE IF NOT EXISTS guilds (
+    id TEXT PRIMARY KEY,
+    owner_id TEXT NOT NULL,
+    log_bots INTEGER NOT NULL DEFAULT 0,
+    ignored_channels TEXT NOT NULL DEFAULT '[]',
+    event_logs TEXT NOT NULL DEFAULT '{}',
+    disabled_events TEXT NOT NULL DEFAULT '[]'
+  );
+
+  CREATE TABLE IF NOT EXISTS messages (
+    id TEXT PRIMARY KEY,
+    author_id TEXT NOT NULL,
+    guild_id TEXT NOT NULL,
+    channel_id TEXT NOT NULL,
+    content TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
+`);
+
 const guildCache = new Map<string, GuildSettings>();
 
 export function initDb(): void {
-  db.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA foreign_keys = ON;
-
-    CREATE TABLE IF NOT EXISTS guilds (
-      id TEXT PRIMARY KEY,
-      owner_id TEXT NOT NULL,
-      log_bots INTEGER NOT NULL DEFAULT 0,
-      ignored_channels TEXT NOT NULL DEFAULT '[]',
-      event_logs TEXT NOT NULL DEFAULT '{}',
-      disabled_events TEXT NOT NULL DEFAULT '[]'
-    );
-
-    CREATE TABLE IF NOT EXISTS messages (
-      id TEXT PRIMARY KEY,
-      author_id TEXT NOT NULL,
-      guild_id TEXT NOT NULL,
-      channel_id TEXT NOT NULL,
-      content TEXT NOT NULL DEFAULT '',
-      created_at INTEGER NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
-  `);
   logger.info('Database initialized');
 }
 

@@ -14,7 +14,9 @@ const OPTION_TYPE_NAMES: Record<number, string> = {
 // Hardcoded categories so commands appear in a logical order
 const COMMAND_CATEGORIES: [string, string[]][] = [
   ['Logging', ['log']],
-  ['Utility', ['ping', 'userinfo', 'serverinfo', 'archive', 'help']],
+  ['Moderation', ['kick', 'ban', 'unban', 'timeout', 'warn', 'warnings', 'delwarn', 'purge', 'lock', 'unlock', 'slowmode']],
+  ['Utility', ['ping', 'userinfo', 'serverinfo', 'avatar', 'banner', 'roleinfo', 'botinfo', 'archive', 'help']],
+  ['Fun', ['8ball', 'coinflip', 'choose', 'poll']],
 ];
 
 interface RawOption {

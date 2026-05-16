@@ -89,3 +89,12 @@ export interface CachedMessage {
   content: string;
   createdAt: number;
 }
+
+export interface Warning {
+  id: number;
+  guildId: string;
+  userId: string;
+  moderatorId: string;
+  reason: string;
+  createdAt: number;
+}

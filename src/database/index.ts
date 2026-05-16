@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 import { mkdirSync } from 'fs';
-import { GuildSettings, CachedMessage, LogEventName, ALL_LOG_EVENTS } from '../types';
+import { GuildSettings, CachedMessage, Warning, LogEventName, ALL_LOG_EVENTS } from '../types';
 import { logger } from '../utils/logger';
 
 const dbPath = path.resolve(process.env.DATABASE_PATH || './data/meisbot.db');
@@ -33,6 +33,17 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
+
+  CREATE TABLE IF NOT EXISTS warnings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    moderator_id TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_warnings_guild_user ON warnings(guild_id, user_id);
 `);
 
 const guildCache = new Map<string, GuildSettings>();
@@ -64,6 +75,10 @@ const stmts = {
   deleteMessage: db.prepare('DELETE FROM messages WHERE id = ?'),
   updateMessage: db.prepare('UPDATE messages SET content = ? WHERE id = ?'),
   deleteOldMessages: db.prepare('DELETE FROM messages WHERE created_at < ?'),
+  insertWarning: db.prepare('INSERT INTO warnings (guild_id, user_id, moderator_id, reason, created_at) VALUES (?, ?, ?, ?, ?)'),
+  getWarnings: db.prepare('SELECT * FROM warnings WHERE guild_id = ? AND user_id = ? ORDER BY created_at DESC'),
+  deleteWarning: db.prepare('DELETE FROM warnings WHERE id = ? AND guild_id = ?'),
+  clearWarnings: db.prepare('DELETE FROM warnings WHERE guild_id = ? AND user_id = ?'),
 };
 
 export function getGuild(guildId: string): GuildSettings | null {
@@ -181,6 +196,34 @@ export function deleteMessage(id: string): void {
 
 export function updateMessageContent(id: string, content: string): void {
   stmts.updateMessage.run(content, id);
+}
+
+export function addWarning(guildId: string, userId: string, moderatorId: string, reason: string): Warning {
+  const now = Date.now();
+  const result = stmts.insertWarning.run(guildId, userId, moderatorId, reason, now) as { lastInsertRowid: number };
+  return { id: result.lastInsertRowid, guildId, userId, moderatorId, reason, createdAt: now };
+}
+
+export function getWarnings(guildId: string, userId: string): Warning[] {
+  const rows = stmts.getWarnings.all(guildId, userId) as Record<string, unknown>[];
+  return rows.map(r => ({
+    id: r.id as number,
+    guildId: r.guild_id as string,
+    userId: r.user_id as string,
+    moderatorId: r.moderator_id as string,
+    reason: r.reason as string,
+    createdAt: r.created_at as number,
+  }));
+}
+
+export function deleteWarning(id: number, guildId: string): boolean {
+  const result = stmts.deleteWarning.run(id, guildId) as { changes: number };
+  return result.changes > 0;
+}
+
+export function clearWarnings(guildId: string, userId: string): number {
+  const result = stmts.clearWarnings.run(guildId, userId) as { changes: number };
+  return result.changes;
 }
 
 export function cleanOldMessages(): void {

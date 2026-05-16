@@ -1,6 +1,6 @@
 import {
   SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder,
-  ChannelType, PermissionFlagsBits,
+  ChannelType, PermissionFlagsBits, MessageFlags,
 } from 'discord.js';
 import {
   ALL_LOG_EVENTS, PRESET_EVENT_MAP, EVENT_DESCRIPTIONS, LogEventName,
@@ -74,7 +74,7 @@ function resolveEvents(input: string): LogEventName[] {
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   if (!interaction.guild) {
-    await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+    await interaction.reply({ content: 'This command can only be used in a server.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -88,7 +88,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     const events = resolveEvents(eventInput);
 
     if (events.length === 0) {
-      await interaction.reply({ content: `No valid events found in: \`${eventInput}\`\nUse a preset (voice/message/member/moderation/joinlog/server/role/channel/all) or event name.`, ephemeral: true });
+      await interaction.reply({ content: `No valid events found in: \`${eventInput}\`\nUse a preset (voice/message/member/moderation/joinlog/server/role/channel/all) or event name.`, flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -98,7 +98,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       .setColor(0x57F287)
       .setTimestamp()
       .addFields({ name: 'Events', value: events.join(', ') }),
-    ], ephemeral: true });
+    ], flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -111,7 +111,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     } else {
       events = resolveEvents(eventInput);
       if (events.length === 0) {
-        await interaction.reply({ content: `No valid events found: \`${eventInput}\``, ephemeral: true });
+        await interaction.reply({ content: `No valid events found: \`${eventInput}\``, flags: MessageFlags.Ephemeral });
         return;
       }
       removeEventLog(guild.id, events);
@@ -121,7 +121,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       .setColor(0xED4245)
       .setTimestamp()
       .addFields({ name: 'Events', value: events.join(', ') }),
-    ], ephemeral: true });
+    ], flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -155,7 +155,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       embed.addFields({ name: 'Ignored channels', value: settings.ignoredChannels.map(c => `<#${c}>`).join(', ') });
     }
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -165,7 +165,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     if (eventName) {
       const desc = EVENT_DESCRIPTIONS[eventName as LogEventName];
       if (!desc) {
-        await interaction.reply({ content: `Unknown event: \`${eventName}\``, ephemeral: true });
+        await interaction.reply({ content: `Unknown event: \`${eventName}\``, flags: MessageFlags.Ephemeral });
         return;
       }
       await interaction.reply({ embeds: [new EmbedBuilder()
@@ -173,7 +173,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         .setDescription(desc)
         .setColor(0x5865F2)
         .setTimestamp(),
-      ], ephemeral: true });
+      ], flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -190,7 +190,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       .setFooter({ text: 'Use /log events <event> for a detailed description' })
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -202,7 +202,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       .setDescription(`<#${target.id}> is now **${nowIgnored ? 'ignored' : 'no longer ignored'}**`)
       .setColor(nowIgnored ? 0xFEE75C : 0x57F287)
       .setTimestamp(),
-    ], ephemeral: true });
+    ], flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -212,14 +212,14 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       .setDescription(`Bot logging is now **${nowLogging ? 'enabled' : 'disabled'}**`)
       .setColor(nowLogging ? 0x57F287 : 0xED4245)
       .setTimestamp(),
-    ], ephemeral: true });
+    ], flags: MessageFlags.Ephemeral });
     return;
   }
 
   if (sub === 'reset') {
     const confirm = interaction.options.getString('confirm', true);
     if (confirm !== 'CONFIRM') {
-      await interaction.reply({ content: 'Type exactly `CONFIRM` to reset all logging settings.', ephemeral: true });
+      await interaction.reply({ content: 'Type exactly `CONFIRM` to reset all logging settings.', flags: MessageFlags.Ephemeral });
       return;
     }
     resetGuild(guild.id, guild.ownerId);
@@ -227,6 +227,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       .setDescription('All logging settings have been reset.')
       .setColor(0xED4245)
       .setTimestamp(),
-    ], ephemeral: true });
+    ], flags: MessageFlags.Ephemeral });
   }
 }

@@ -5,8 +5,8 @@ export const data = new SlashCommandBuilder()
   .setDescription('Show bot latency');
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
-  const sent = await interaction.reply({ content: 'Pinging...', fetchReply: true });
-  const roundtrip = sent.createdTimestamp - interaction.createdTimestamp;
+  const { resource } = await interaction.reply({ content: 'Pinging...', withResponse: true });
+  const roundtrip = (resource?.message?.createdTimestamp ?? Date.now()) - interaction.createdTimestamp;
   const ws = interaction.client.ws.ping;
 
   await interaction.editReply({ content: '', embeds: [new EmbedBuilder()

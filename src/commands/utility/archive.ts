@@ -1,6 +1,6 @@
 import {
   SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder,
-  ChannelType, PermissionFlagsBits, TextChannel, NewsChannel,
+  ChannelType, PermissionFlagsBits, TextChannel, NewsChannel, MessageFlags,
 } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
@@ -18,12 +18,12 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const isTextish = interaction.channel?.type === ChannelType.GuildText
     || interaction.channel?.type === ChannelType.GuildAnnouncement;
   if (!interaction.guild || !isTextish) {
-    await interaction.reply({ content: 'This command can only be used in a server text or announcement channel.', ephemeral: true });
+    await interaction.reply({ content: 'This command can only be used in a server text or announcement channel.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   const count = interaction.options.getInteger('count') ?? 50;
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const channel = interaction.channel as TextChannel | NewsChannel;
   const messages = await channel.messages.fetch({ limit: count }).catch(() => null);

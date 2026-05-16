@@ -1,4 +1,4 @@
-import { Events, Interaction } from 'discord.js';
+import { Events, Interaction, MessageFlags } from 'discord.js';
 import { BotClient } from '../../types';
 import { logger } from '../../utils/logger';
 
@@ -26,11 +26,10 @@ export async function execute(client: BotClient, interaction: Interaction): Prom
     await command.execute(interaction);
   } catch (e) {
     logger.error(`Error executing command ${interaction.commandName}:`, e);
-    const msg = { content: 'An error occurred while executing this command.', ephemeral: true };
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp(msg).catch(() => {});
+      await interaction.followUp({ content: 'An error occurred while executing this command.', flags: MessageFlags.Ephemeral }).catch(() => {});
     } else {
-      await interaction.reply(msg).catch(() => {});
+      await interaction.reply({ content: 'An error occurred while executing this command.', flags: MessageFlags.Ephemeral }).catch(() => {});
     }
   }
 }

@@ -1,5 +1,5 @@
 import {
-  SlashCommandBuilder, ChatInputCommandInteraction, AutocompleteInteraction, EmbedBuilder,
+  SlashCommandBuilder, ChatInputCommandInteraction, AutocompleteInteraction, EmbedBuilder, MessageFlags,
 } from 'discord.js';
 import { BotClient } from '../../types';
 
@@ -71,7 +71,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   if (commandName) {
     const command = client.commands.get(commandName);
     if (!command) {
-      await interaction.reply({ content: `Unknown command: \`${commandName}\``, ephemeral: true });
+      await interaction.reply({ content: `Unknown command: \`${commandName}\``, flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -103,7 +103,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       embed.setFooter({ text: 'Requires elevated permissions (see command description)' });
     }
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -126,5 +126,5 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     if (lines) embed.addFields({ name: category, value: lines });
   }
 
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 }

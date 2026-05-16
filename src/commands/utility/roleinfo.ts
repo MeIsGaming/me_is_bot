@@ -40,7 +40,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setColor(fullRole.color || 0x99aab5)
     .addFields(
       { name: 'ID', value: fullRole.id, inline: true },
-      { name: 'Color', value: fullRole.color ? `#${intToHex(fullRole.color)}` : 'None', inline: true },
+      { name: 'Color', value: fullRole.color ? intToHex(fullRole.color) : 'None', inline: true },
       { name: 'Members', value: memberCount.toString(), inline: true },
       { name: 'Position', value: fullRole.position.toString(), inline: true },
       { name: 'Hoisted', value: fullRole.hoist ? 'Yes' : 'No', inline: true },

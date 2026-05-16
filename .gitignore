@@ -21,6 +21,6 @@ data/
 .DS_Store
 Thumbs.db
 
-# Claude Code — project instructions stay local, not committed
+# Claude Code — stays local, not committed
 CLAUDE.md
-.claude/settings.local.json
+.claude/
